@@ -13,7 +13,7 @@ Servidor multiplayer em Node.js
 ### 📦 Player
 
 Representa um jogador conectado na sala.
-
+```js
 class Player {
     uuid: string           // Identificador único do jogador
     name: string           // Nome do jogador
@@ -29,6 +29,7 @@ class Player {
     weapons: array         // Lista de armas possuídas
     animations: array      // Animações em execução
 }
+```
 
 Métodos principais:
 
@@ -45,7 +46,7 @@ static fromJSON(json): Cria uma instância de Player a partir de JSON.
 ### 📦 Vector3
 
 Representa uma posição ou vetor 3D.
-
+```js
 class Vector3 {
     x: number
     y: number
@@ -56,13 +57,13 @@ class Vector3 {
     toJSON()
 }
 
-
+```
 ---
 
 ### 📦 Vector2
 
 Representa um vetor 2D, usado para rotações simplificadas.
-
+```js
 class Vector2 {
     x: number
     y: number
@@ -72,13 +73,13 @@ class Vector2 {
     toJSON()
 }
 
-
+```
 ---
 
 ### 📦 Room (Sala)
 
 Gerencia os jogadores conectados e a lógica de times.
-
+```js
 class Room {
     players: Map<string, Player>  // Mapeamento uuid → Player
     friendlyFire: boolean          // Indica se dano amigo está ativado
@@ -90,7 +91,7 @@ class Room {
     async remove(uuid): remove jogador da sala
 }
 
-
+```
 ---
 
 ### 🔄 Eventos WebSocket
@@ -98,7 +99,7 @@ class Room {
 Eventos do Cliente para Servidor:
 
 sync: Envia atualização do estado do jogador (posição, rotação, inventário, armas etc).
-
+```json
 
 {
   "event": "sync",
@@ -106,14 +107,14 @@ sync: Envia atualização do estado do jogador (posição, rotação, inventári
     // Dados do jogador (posição, rotações, armas, inventário, animações, vida, etc)
   }
 }
-
+```
 
 ---
 
 ### Eventos do Servidor para Clientes:
 
 player_sync: Envia a lista completa de jogadores atualizados a todos os clientes a cada 50ms.
-
+```json
 
 {
   "event": "player_sync",
@@ -122,7 +123,7 @@ player_sync: Envia a lista completa de jogadores atualizados a todos os clientes
     { "uuid": "...", "name": "...", "team": "blue", "life": 100, "position": {...}, ... }
   ]
 }
-
+```
 
 ---
 
@@ -146,9 +147,9 @@ Ao desconectar, o jogador é removido da sala.
 
 ### Executar servidor:
 
-
+```text
 node server.js
-
+```
 O servidor escutará na porta 8080 (ou a definida pela variável de ambiente PORT).
 
 
