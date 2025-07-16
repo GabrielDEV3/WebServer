@@ -23,32 +23,40 @@ wss.on("connection", async (socket) => {
 
     // Enviar UUID ao cliente
     socket.send(JSON.stringify({
-        cmd: "joined_server",
+        event: "joined_server",
         content: { msg: "Bem-vindo ao servidor!", uuid }
     }));
 
     // Enviar jogador local
     socket.send(JSON.stringify({
-        cmd: "spawn_local_player",
-        content: { msg: "Você entrou!", player: newPlayer.toJSON() }
+        event: "local_player",
+        content: {
+            msg: `Você entrou como ${newPlayer.name}!`,
+            player: newPlayer.toJSON()
+        }
     }));
 
     // Enviar novo jogador para todos os outros
     wss.clients.forEach((client) => {
         if (client !== socket && client.readyState === WebSocket.OPEN) {
             client.send(JSON.stringify({
-                cmd: "spawn_new_player",
-                content: { msg: "Sincronizando novo jogador!", player: newPlayer.toJSON() }
+                event: "new_player",
+                content: {
+                    msg: `${newPlayer.name} entrou no jogo!`,
+                    player: newPlayer.toJSON()
+                }
             }));
         }
     });
 
     // Enviar todos os outros jogadores ao novo cliente
     socket.send(JSON.stringify({
-        cmd: "spawn_network_players",
+        event: "external_players",
         content: {
-            msg: "Sincronizando com o servidor!",
-            players: (await room.getAll()).filter(p => p.uuid !== uuid).map(p => p.toJSON())
+            msg: "Sincronizando jogadores existentes...",
+            players: (await room.getAll())
+                .filter(p => p.uuid !== uuid)
+                .map(p => p.toJSON())
         }
     }));
 
@@ -62,12 +70,12 @@ wss.on("connection", async (socket) => {
             return;
         }
 
-        switch (data.cmd) {
+        switch (data.event) {
             case "update": {
                 await room.update(uuid, data.content);
 
                 const update = {
-                    cmd: "update_player",
+                    event: "update_player",
                     content: {
                         uuid,
                         ...data.content
@@ -83,10 +91,13 @@ wss.on("connection", async (socket) => {
             }
 
             case "chat": {
+                const sender = await room.get(uuid);
+
                 const chat = {
-                    cmd: "new_chat_message",
+                    event: "new_chat_message",
                     content: {
                         uuid,
+                        name: sender?.name || "???",
                         msg: data.content.msg
                     }
                 };
@@ -100,12 +111,13 @@ wss.on("connection", async (socket) => {
             }
 
             default:
-                console.warn("Comando desconhecido:", data.cmd);
+                console.warn("Evento desconhecido:", data.event);
                 break;
         }
     });
 
     socket.on("close", async () => {
+        const leaver = await room.get(uuid);
         console.log(`Cliente ${uuid} desconectado.`);
 
         await room.remove(uuid);
@@ -113,8 +125,12 @@ wss.on("connection", async (socket) => {
         wss.clients.forEach((client) => {
             if (client.readyState === WebSocket.OPEN) {
                 client.send(JSON.stringify({
-                    cmd: "player_disconnected",
-                    content: { uuid }
+                    event: "player_disconnected",
+                    content: {
+                        uuid,
+                        name: leaver?.name || "???",
+                        msg: `${leaver?.name || "Um jogador"} saiu do jogo!`
+                    }
                 }));
             }
         });
