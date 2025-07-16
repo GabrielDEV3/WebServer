@@ -17,6 +17,13 @@ class Player {
         this.rotation.set(x, y, z, w);
     }
 
+    setJSON(json) {
+        if (!json) return;
+        if (json.name !== undefined) this.name = json.name;
+        if (json.position !== undefined) this.position.setJSON(json.position);
+        if (json.rotation !== undefined) this.rotation.setJSON(json.rotation);
+    }
+
     toJSON() {
         return {
             uuid: this.uuid,
