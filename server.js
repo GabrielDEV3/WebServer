@@ -16,6 +16,7 @@ wss.on("connection", (socket) => {
     socket.on("pong", () => socket.isAlive = true);
 
     const uuid = v4();
+    console.log("Player connected:", uuid);
 
     socket.on("message", async (message) => {
         let data;
@@ -47,8 +48,12 @@ wss.on("connection", (socket) => {
             if (typeof target !== "string" || typeof damage !== "number") return;
             const targetPlayer = await room.get(target);
             if (!targetPlayer) return;
+            const wasAlive = targetPlayer.life > 0;
             targetPlayer.life = Math.max(0, targetPlayer.life - damage);
-            if (targetPlayer.life <= 0) targetPlayer.isDeath = true;
+            if (wasAlive && targetPlayer.life <= 0) {
+                targetPlayer.isDeath = true;
+                console.log("Player died:", target);
+            }
             await room.update(target, targetPlayer);
             return;
         }
@@ -56,8 +61,12 @@ wss.on("connection", (socket) => {
         if (data.event === "on_heal") {
             const { amount } = data;
             if (typeof amount !== "number") return;
+            const wasDead = player.life <= 0;
             player.life = Math.min(100, player.life + amount);
-            if (player.life > 0) player.isDeath = false;
+            if (wasDead && player.life > 0) {
+                player.isDeath = false;
+                console.log("Player respawned:", uuid);
+            }
             await room.update(uuid, player);
             return;
         }
@@ -65,6 +74,7 @@ wss.on("connection", (socket) => {
 
     socket.on("close", async () => {
         await room.remove(uuid);
+        console.log("Player disconnected:", uuid);
     });
 });
 
@@ -88,6 +98,6 @@ const interval = setInterval(() => {
         ws.isAlive = false;
         ws.ping();
     });
-}, 15000);
+}, 10000);
 
 wss.on("close", () => clearInterval(interval));
