@@ -22,6 +22,7 @@ class Player {
         if (!json) return;
 
         if ("name" in json) this.name = json.name;
+        if ("team" in json) this.team = json.team;
         if ("life" in json) this.life = json.life;
         if ("position" in json) this.position.setJSON(json.position);
         if ("bodyRotation" in json) this.bodyRotation.setJSON(json.bodyRotation);
@@ -50,6 +51,7 @@ class Player {
 
     static fromJSON(json) {
         const p = new Player(json.uuid, json.name ?? "Unknown");
+        if ("team" in json) p.team = json.team;
         p.setJSON(json);
         return p;
     }
