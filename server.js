@@ -1,8 +1,8 @@
 const express = require("express");
 const WebSocket = require("ws");
 const { v4 } = require("uuid");
-const room = require("./room.js");
-const Player = require("./player.js");
+const room = require("./js/room.js");
+const Player = require("./js/player.js");
 
 const app = express();
 const PORT = process.env.PORT || 8080;
