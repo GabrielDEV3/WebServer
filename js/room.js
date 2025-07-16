@@ -1,4 +1,4 @@
-const Player = require("./player.js");
+const Player = require("./js/player.js");
 
 class Room {
   constructor() {
