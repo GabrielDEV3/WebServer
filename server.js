@@ -1,20 +1,25 @@
 const express = require("express");
 const WebSocket = require("ws");
 const { v4 } = require("uuid");
-const playerlist = require("./playerlist.js");
+const room = require("./room.js");
+const Player = require("./player.js");
 
 const app = express();
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 8080;
 const server = app.listen(PORT, () => {
-    console.log("Server listening on port: " + PORT);
+    console.log("Server listening on port:", PORT);
 });
 
 const wss = new WebSocket.Server({ server });
 
 wss.on("connection", async (socket) => {
     const uuid = v4();
-    await playerlist.add(uuid);
-    const newPlayer = await playerlist.get(uuid);
+    await room.add(uuid, `Player-${uuid.slice(0, 5)}`);
+    const newPlayer = await room.get(uuid);
+
+    // Ping-pong keep-alive
+    socket.isAlive = true;
+    socket.on("pong", () => socket.isAlive = true);
 
     // Enviar UUID ao cliente
     socket.send(JSON.stringify({
@@ -25,7 +30,7 @@ wss.on("connection", async (socket) => {
     // Enviar jogador local
     socket.send(JSON.stringify({
         cmd: "spawn_local_player",
-        content: { msg: "Spawning local (you) player!", player: newPlayer }
+        content: { msg: "Spawning local (you) player!", player: newPlayer.toJSON() }
     }));
 
     // Enviar novo jogador para todos os outros
@@ -33,7 +38,7 @@ wss.on("connection", async (socket) => {
         if (client !== socket && client.readyState === WebSocket.OPEN) {
             client.send(JSON.stringify({
                 cmd: "spawn_new_player",
-                content: { msg: "Spawning new network player!", player: newPlayer }
+                content: { msg: "Spawning new network player!", player: newPlayer.toJSON() }
             }));
         }
     });
@@ -43,11 +48,12 @@ wss.on("connection", async (socket) => {
         cmd: "spawn_network_players",
         content: {
             msg: "Spawning network players!",
-            players: await playerlist.getAll()
+            players: (await room.getAll()).filter(p => p.uuid !== uuid).map(p => p.toJSON())
         }
     }));
 
-    socket.on("message", (message) => {
+    // Processar mensagens
+    socket.on("message", async (message) => {
         let data;
         try {
             data = JSON.parse(message.toString());
@@ -56,48 +62,54 @@ wss.on("connection", async (socket) => {
             return;
         }
 
-        if (data.cmd === "position") {
-            playerlist.update(uuid, data.content.x, data.content.y);
+        switch (data.cmd) {
+            case "update": {
+                await room.update(uuid, data.content);
 
-            const update = {
-                cmd: "update_position",
-                content: {
-                    uuid,
-                    x: data.content.x,
-                    y: data.content.y
-                }
-            };
+                const update = {
+                    cmd: "update_player",
+                    content: {
+                        uuid,
+                        ...data.content
+                    }
+                };
 
-            wss.clients.forEach((client) => {
-                if (client !== socket && client.readyState === WebSocket.OPEN) {
-                    client.send(JSON.stringify(update));
-                }
-            });
-        }
+                wss.clients.forEach((client) => {
+                    if (client !== socket && client.readyState === WebSocket.OPEN) {
+                        client.send(JSON.stringify(update));
+                    }
+                });
+                break;
+            }
 
-        if (data.cmd === "chat") {
-            const chat = {
-                cmd: "new_chat_message",
-                content: {
-                    msg: data.content.msg
-                }
-            };
+            case "chat": {
+                const chat = {
+                    cmd: "new_chat_message",
+                    content: {
+                        uuid,
+                        msg: data.content.msg
+                    }
+                };
 
-            wss.clients.forEach((client) => {
-                if (client.readyState === WebSocket.OPEN) {
-                    client.send(JSON.stringify(chat));
-                }
-            });
+                wss.clients.forEach((client) => {
+                    if (client.readyState === WebSocket.OPEN) {
+                        client.send(JSON.stringify(chat));
+                    }
+                });
+                break;
+            }
+
+            default:
+                console.warn("Comando desconhecido:", data.cmd);
+                break;
         }
     });
 
-    socket.on("close", () => {
+    socket.on("close", async () => {
         console.log(`Cliente ${uuid} desconectado.`);
 
-        // Remover da lista
-        playerlist.remove(uuid);
+        await room.remove(uuid);
 
-        // Avisar os outros jogadores
         wss.clients.forEach((client) => {
             if (client.readyState === WebSocket.OPEN) {
                 client.send(JSON.stringify({
@@ -108,3 +120,14 @@ wss.on("connection", async (socket) => {
         });
     });
 });
+
+// Intervalo ping-pong para desconectar clientes mortos
+const interval = setInterval(() => {
+    wss.clients.forEach((ws) => {
+        if (!ws.isAlive) return ws.terminate();
+        ws.isAlive = false;
+        ws.ping();
+    });
+}, 30000);
+
+wss.on("close", () => clearInterval(interval));
