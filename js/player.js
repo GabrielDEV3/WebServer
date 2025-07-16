@@ -9,8 +9,7 @@ class Player {
         this.life = 100;
 
         this.position = new Vector3(0, 0, 0);
-        this.bodyRotation = new Vector2(0, 0);
-        this.viewRotation = new Vector2(0, 0);
+        this.rotations = [new Vector2(0, 0), new Vector2(0, 0)];
 
         this.inventory = {};
         this.weapon = 0;
@@ -25,8 +24,10 @@ class Player {
         if ("team" in json) this.team = json.team;
         if ("life" in json) this.life = json.life;
         if ("position" in json) this.position.setJSON(json.position);
-        if ("bodyRotation" in json) this.bodyRotation.setJSON(json.bodyRotation);
-        if ("viewRotation" in json) this.viewRotation.setJSON(json.viewRotation);
+        if ("rotations" in json && Array.isArray(json.rotations) && json.rotations.length === 2) {
+            this.rotations[0].setJSON(json.rotations[0]);
+            this.rotations[1].setJSON(json.rotations[1]);
+        }
         if ("inventory" in json) this.inventory = { ...json.inventory };
         if ("animations" in json) this.animations = json.animations;
         if ("weapon" in json) this.weapon = json.weapon;
@@ -40,8 +41,7 @@ class Player {
             team: this.team,
             life: this.life,
             position: this.position.toJSON(),
-            bodyRotation: this.bodyRotation.toJSON(),
-            viewRotation: this.viewRotation.toJSON(),
+            rotations: [this.rotations[0].toJSON(), this.rotations[1].toJSON()],
             inventory: this.inventory,
             weapon: this.weapon,
             weapons: this.weapons,
