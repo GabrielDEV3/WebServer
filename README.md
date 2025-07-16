@@ -1,11 +1,10 @@
-Original Project: https://github.com/welson-rodrigues/Servidor-Multiplayer-WebSocket
-
-
 README.md
 
-# 🌐 WebSocket Multiplayer Server
+---
 
-Servidor multiplayer em Node.js com WebSocket para jogos ou experiências em tempo real com múltiplos jogadores, suporte a posição, rotação e mensagens de chat.
+# 🌐 WebSocket Multiplayer FPS Server
+
+Servidor multiplayer em Node.js
 
 ---
 
@@ -13,211 +12,152 @@ Servidor multiplayer em Node.js com WebSocket para jogos ou experiências em tem
 
 ### 📦 Player
 
-Representa um jogador ativo na sala.
+Representa um jogador conectado na sala.
 
-```js
 class Player {
-    uuid: string
-    name: string
-    position: Vector3
-    rotation: Quaternion
+    uuid: string           // Identificador único do jogador
+    name: string           // Nome do jogador
+    team: string | null    // Time do jogador ("red" ou "blue")
+    life: number           // Vida atual do jogador
+
+    position: Vector3      // Posição 3D no espaço
+    bodyRotation: Vector2  // Rotação do corpo (eixo horizontal e vertical)
+    viewRotation: Vector2  // Rotação da câmera/view (vertical)
+
+    inventory: object      // Inventário do jogador (itens e quantidades)
+    weapon: number         // Índice da arma atual
+    weapons: array         // Lista de armas possuídas
+    animations: array      // Animações em execução
 }
-setPosition(x, y, z)
 
-setRotation(x, y, z, w)
+Métodos principais:
 
-setJSON(json) — atualiza posição, rotação ou nome dinamicamente.
+setJSON(json): Atualiza o estado do jogador a partir de um objeto JSON.
 
-toJSON() / fromJSON(json) — serialização/deserialização.
+toJSON(): Serializa o jogador para JSON para envio pela rede.
 
-```
+static fromJSON(json): Cria uma instância de Player a partir de JSON.
+
+
 
 ---
 
 ### 📦 Vector3
 
-Representa uma posição 3D no espaço.
-```js
+Representa uma posição ou vetor 3D.
+
 class Vector3 {
     x: number
     y: number
     z: number
+
+    set(x, y, z)
+    setJSON(json)
+    toJSON()
 }
 
-set(x, y, z)
-
-toJSON() / fromJSON(json)
-
-setJSON(json)
-
-```
 
 ---
 
-### 📦 Quaternion
+### 📦 Vector2
 
-Representa uma rotação em 3D.
-```js
-class Quaternion {
+Representa um vetor 2D, usado para rotações simplificadas.
+
+class Vector2 {
     x: number
     y: number
-    z: number
-    w: number
+
+    set(x, y)
+    setJSON(json)
+    toJSON()
 }
 
-set(x, y, z, w)
 
-toJSON() / fromJSON(json)
-
-setJSON(json)
-
-```
 ---
 
-### 📦 room.js
+### 📦 Room (Sala)
 
-Gerencia a lista de jogadores conectados.
-```js
-room.add(uuid, name)
-room.get(uuid)
-room.getAll()
-room.update(uuid, json)
-room.remove(uuid)
+Gerencia os jogadores conectados e a lógica de times.
 
-```
+class Room {
+    players: Map<string, Player>  // Mapeamento uuid → Player
+    friendlyFire: boolean          // Indica se dano amigo está ativado
+
+    async add(uuid, name): adiciona um novo jogador, definindo time balanceado
+    async get(uuid): obtém um jogador pelo uuid
+    async getAll(): retorna todos os jogadores
+    async sync(uuid, json): atualiza estado do jogador com dados recebidos
+    async remove(uuid): remove jogador da sala
+}
+
+
 ---
 
 ### 🔄 Eventos WebSocket
 
-join
+Eventos do Cliente para Servidor:
 
-```json
+sync: Envia atualização do estado do jogador (posição, rotação, inventário, armas etc).
+
+
 {
-  "event": "join",
-  "content": { "name": "..." }
-}
-```
----
-
-joined_server
-```json
-{
-  "event": "joined_server",
-  "content": { "msg": "Bem-vindo ao servidor!", "uuid": "..." }
-}
-```
-
----
-
-local_player
-```json
-{
-  "event": "local_player",
+  "event": "sync",
   "content": {
-    "msg": "Você entrou como Player-abcde!",
-    "player": { ... }
+    // Dados do jogador (posição, rotações, armas, inventário, animações, vida, etc)
   }
 }
 
-```
----
-
-new_player
-```json
-{
-  "event": "new_player",
-  "content": {
-    "msg": "Player-abcde entrou no jogo!",
-    "player": { ... }
-  }
-}
-```
 
 ---
 
-external_players
-```json
+### Eventos do Servidor para Clientes:
+
+player_sync: Envia a lista completa de jogadores atualizados a todos os clientes a cada 50ms.
+
+
 {
-  "event": "external_players",
-  "content": {
-    "msg": "Sincronizando jogadores existentes...",
-    "players": [ { ... }, { ... } ]
-  }
+  "event": "player_sync",
+  "content": [
+    { "uuid": "...", "name": "...", "team": "red", "life": 100, "position": {...}, ... },
+    { "uuid": "...", "name": "...", "team": "blue", "life": 100, "position": {...}, ... }
+  ]
 }
 
-```
----
-
-update (Cliente → Servidor)
-```json
-{
-  "event": "update",
-  "content": {
-    "position": { "x": 10, "y": 5, "z": 2 },
-    "rotation": { "x": 0, "y": 0, "z": 0, "w": 1 }
-  }
-}
-
-```
----
-
-update_player (Servidor → Outros clientes)
-```json
-{
-  "event": "update_player",
-  "content": {
-    "uuid": "...",
-    "position": { ... },
-    "rotation": { ... }
-  }
-}
-```
 
 ---
 
-chat (Cliente → Servidor)
-```json
-{
-  "event": "chat",
-  "content": {
-    "msg": "Olá galera!"
-  }
-}
+### 🛠️ Funcionamento
 
-```
----
+A cada conexão WebSocket, é gerado um UUID único para o jogador.
 
-new_chat_message (Servidor → Todos)
-```json
-{
-  "event": "new_chat_message",
-  "content": {
-    "uuid": "...",
-    "name": "Player-ab123",
-    "msg": "Olá galera!"
-  }
-}
+O jogador é automaticamente adicionado à sala e recebe um time balanceado ("red" ou "blue").
 
-```
----
+O servidor recebe atualizações via evento sync e atualiza o estado do jogador internamente.
 
-player_disconnected
-```json
-{
-  "event": "player_disconnected",
-  "content": {
-    "uuid": "...",
-    "name": "Player-ab123",
-    "msg": "Player-ab123 saiu do jogo!"
-  }
-}
-```
+A cada 50ms, o servidor envia a lista completa de jogadores sincronizados para todos os clientes via player_sync.
+
+O servidor envia um ping a cada 15 segundos para garantir que o cliente está vivo; se o cliente não responder com pong, a conexão é encerrada.
+
+Ao desconectar, o jogador é removido da sala.
+
+
 
 ---
 
-### ♻️ Ping-Pong Keep Alive
+### Executar servidor:
 
-A cada 15 segundos, o servidor envia um ping. Se o cliente não responder com pong, ele é desconectado automaticamente.
 
+node server.js
+
+O servidor escutará na porta 8080 (ou a definida pela variável de ambiente PORT).
+
+
+
+---
+
+📚 Referências
+
+
+Projeto original base: Servidor-Multiplayer-WebSocket (GitHub)
 
 ---
