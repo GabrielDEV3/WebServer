@@ -7,7 +7,7 @@ const Player = require("./player.js");
 const app = express();
 const PORT = process.env.PORT || 8080;
 const server = app.listen(PORT, () => {
-    console.log("Server listening on port:", PORT);
+    console.log("Servidor escutando na porta:", PORT);
 });
 
 const wss = new WebSocket.Server({ server });
@@ -30,7 +30,7 @@ wss.on("connection", async (socket) => {
     // Enviar jogador local
     socket.send(JSON.stringify({
         cmd: "spawn_local_player",
-        content: { msg: "Spawning local (you) player!", player: newPlayer.toJSON() }
+        content: { msg: "Você entrou!", player: newPlayer.toJSON() }
     }));
 
     // Enviar novo jogador para todos os outros
@@ -38,7 +38,7 @@ wss.on("connection", async (socket) => {
         if (client !== socket && client.readyState === WebSocket.OPEN) {
             client.send(JSON.stringify({
                 cmd: "spawn_new_player",
-                content: { msg: "Spawning new network player!", player: newPlayer.toJSON() }
+                content: { msg: "Sincronizando novo jogador!", player: newPlayer.toJSON() }
             }));
         }
     });
@@ -47,7 +47,7 @@ wss.on("connection", async (socket) => {
     socket.send(JSON.stringify({
         cmd: "spawn_network_players",
         content: {
-            msg: "Spawning network players!",
+            msg: "Sincronizando com o servidor!",
             players: (await room.getAll()).filter(p => p.uuid !== uuid).map(p => p.toJSON())
         }
     }));
@@ -128,6 +128,6 @@ const interval = setInterval(() => {
         ws.isAlive = false;
         ws.ping();
     });
-}, 30000);
+}, 15000);
 
 wss.on("close", () => clearInterval(interval));
