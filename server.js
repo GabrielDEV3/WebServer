@@ -70,6 +70,30 @@ wss.on("connection", (socket) => {
             await room.update(uuid, player);
             return;
         }
+
+        if (data.event === "chat") {
+            const msg = typeof data.message === "string" ? data.message.trim() : "";
+            if (msg.length === 0) return;
+
+            console.log(`Chat [${player.name} | ${uuid}]: ${msg}`);
+
+            const payload = JSON.stringify({
+                event: "message",
+                from: {
+                    uuid,
+                    name: player.name
+                },
+                message: msg
+            });
+
+            wss.clients.forEach(client => {
+                if (client.readyState === WebSocket.OPEN) {
+                    client.send(payload);
+                }
+            });
+
+            return;
+        }
     });
 
     socket.on("close", async () => {
@@ -98,6 +122,6 @@ const interval = setInterval(() => {
         ws.isAlive = false;
         ws.ping();
     });
-}, 10000);
+}, 15000);
 
 wss.on("close", () => clearInterval(interval));
