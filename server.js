@@ -39,6 +39,8 @@ wss.on("connection", (socket) => {
         if (data.event === "sync") {
             const content = { ...data.content };
             delete content.life;
+            if (typeof content.state === "string") player.state = content.state;
+            if (typeof content.animation === "string") player.animation = content.animation;
             await room.sync(uuid, content);
             return;
         }
@@ -53,10 +55,12 @@ wss.on("connection", (socket) => {
 
             const wasAlive = targetPlayer.life > 0;
             targetPlayer.life = Math.max(0, targetPlayer.life - damage);
+
             if (wasAlive && targetPlayer.life <= 0) {
-                targetPlayer.isDeath = true;
+                targetPlayer.state = "death";
                 console.log("Player died:", target);
             }
+
             await room.sync(target, targetPlayer);
             return;
         }
@@ -66,10 +70,12 @@ wss.on("connection", (socket) => {
             if (typeof amount !== "number") return;
             const wasDead = player.life <= 0;
             player.life = Math.min(100, player.life + amount);
+
             if (wasDead && player.life > 0) {
-                player.isDeath = false;
+                player.state = "alive";
                 console.log("Player respawned:", uuid);
             }
+
             await room.sync(uuid, player);
             return;
         }
@@ -91,6 +97,7 @@ wss.on("connection", (socket) => {
                     client.send(payload);
                 }
             });
+
             return;
         }
     });
