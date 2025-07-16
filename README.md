@@ -57,7 +57,7 @@ setJSON(json)
 📦 Quaternion
 
 Representa uma rotação em 3D.
-
+```js
 class Quaternion {
     x: number
     y: number
