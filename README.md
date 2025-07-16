@@ -34,7 +34,7 @@ toJSON() / fromJSON(json) — serialização/deserialização.
 
 ---
 
-📦 Vector3
+###📦 Vector3
 
 Representa uma posição 3D no espaço.
 ```js
@@ -54,7 +54,7 @@ setJSON(json)
 
 ---
 
-📦 Quaternion
+###📦 Quaternion
 
 Representa uma rotação em 3D.
 ```js
@@ -74,7 +74,7 @@ setJSON(json)
 ```
 ---
 
-📦 room.js
+###📦 room.js
 
 Gerencia a lista de jogadores conectados.
 ```js
@@ -87,7 +87,7 @@ room.remove(uuid)
 ```
 ---
 
-🔄 Eventos WebSocket
+###🔄 Eventos WebSocket
 
 joined_server
 ```json
@@ -205,7 +205,7 @@ player_disconnected
 
 ---
 
-♻️ Ping-Pong Keep Alive
+###♻️ Ping-Pong Keep Alive
 
 A cada 15 segundos, o servidor envia um ping. Se o cliente não responder com pong, ele é desconectado automaticamente.
 
