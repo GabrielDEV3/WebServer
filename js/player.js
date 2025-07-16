@@ -44,7 +44,6 @@ class Player {
             life: this.life,
             position: this.position.toJSON(),
             rotations: [this.rotations[0].toJSON(), this.rotations[1].toJSON()],
-            inventory: this.inventory,
             weapon: this.weapon,
             weapons: this.weapons,
             state: this.state,
