@@ -9,6 +9,13 @@ class Vector3 {
         this.z = z;
     }
 
+    setJSON(json) {
+        if (!json) return;
+        this.x = json.x ?? this.x;
+        this.y = json.y ?? this.y;
+        this.z = json.z ?? this.z;
+    }
+
     toJSON() {
         return { x: this.x, y: this.y, z: this.z };
     }
