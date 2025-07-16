@@ -11,25 +11,55 @@ const server = app.listen(PORT, () => {
 
 const wss = new WebSocket.Server({ server });
 
-wss.on("connection", async (socket) => {
+wss.on("connection", (socket) => {
     socket.isAlive = true;
     socket.on("pong", () => socket.isAlive = true);
 
     const uuid = v4();
-    await room.add(uuid, "Player");
-    const player = await room.get(uuid);
 
     socket.on("message", async (message) => {
         let data;
         try {
             data = JSON.parse(message.toString());
         } catch (err) {
-            console.error("Erro ao fazer parse do JSON:", err);
             return;
         }
 
+        if (data.event === "join") {
+            if (typeof data.name === "string" && data.name.trim().length > 0) {
+                await room.add(uuid, data.name.trim());
+            }
+            return;
+        }
+
+        const player = await room.get(uuid);
+        if (!player) return;
+
         if (data.event === "sync") {
-            await room.sync(uuid, data.content);
+            const content = { ...data.content };
+            delete content.life;
+            await room.sync(uuid, content);
+            return;
+        }
+
+        if (data.event === "on_hit") {
+            const { target, damage } = data;
+            if (typeof target !== "string" || typeof damage !== "number") return;
+            const targetPlayer = await room.get(target);
+            if (!targetPlayer) return;
+            targetPlayer.life = Math.max(0, targetPlayer.life - damage);
+            if (targetPlayer.life <= 0) targetPlayer.isDeath = true;
+            await room.update(target, targetPlayer);
+            return;
+        }
+
+        if (data.event === "on_heal") {
+            const { amount } = data;
+            if (typeof amount !== "number") return;
+            player.life = Math.min(100, player.life + amount);
+            if (player.life > 0) player.isDeath = false;
+            await room.update(uuid, player);
+            return;
         }
     });
 
