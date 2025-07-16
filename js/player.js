@@ -1,5 +1,5 @@
-const { Vector3 } = require("./vector3.js");
-const { Quaternion } = require("./quaternion.js");
+const { Vector3 } = require("./js/vector3.js");
+const { Quaternion } = require("./js/quaternion.js");
 
 class Player {
     constructor(uuid, name) {
