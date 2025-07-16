@@ -10,6 +10,14 @@ class Quaternion {
         this.w = w;
     }
 
+    setJSON(json) {
+        if (!json) return;
+        this.x = json.x ?? this.x;
+        this.y = json.y ?? this.y;
+        this.z = json.z ?? this.z;
+        this.w = json.w ?? this.w;
+    }
+
     toJSON() {
         return { x: this.x, y: this.y, z: this.z, w: this.w };
     }
