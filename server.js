@@ -40,7 +40,7 @@ wss.on("connection", async (socket) => {
         await room.add(uuid, name);
         player = await room.get(uuid);
 
-        console.log(`🎮 Jogador conectado: ${name} (${uuid})`);
+        console.log(`Jogador conectado: ${name} (${uuid})`);
 
         socket.send(JSON.stringify({
             event: "joined_server",
