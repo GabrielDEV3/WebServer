@@ -22,12 +22,12 @@ wss.on("connection", (socket) => {
         let data;
         try {
             data = JSON.parse(message.toString());
-        } catch (err) {
+        } catch {
             return;
         }
 
         if (data.event === "join") {
-            if (typeof data.name === "string" && data.name.trim().length > 0) {
+            if (typeof data.name === "string" && data.name.trim()) {
                 await room.add(uuid, data.name.trim());
             }
             return;
@@ -48,13 +48,16 @@ wss.on("connection", (socket) => {
             if (typeof target !== "string" || typeof damage !== "number") return;
             const targetPlayer = await room.get(target);
             if (!targetPlayer) return;
+
+            if (!room.friendlyFire && player.team === targetPlayer.team) return;
+
             const wasAlive = targetPlayer.life > 0;
             targetPlayer.life = Math.max(0, targetPlayer.life - damage);
             if (wasAlive && targetPlayer.life <= 0) {
                 targetPlayer.isDeath = true;
                 console.log("Player died:", target);
             }
-            await room.update(target, targetPlayer);
+            await room.sync(target, targetPlayer);
             return;
         }
 
@@ -67,22 +70,19 @@ wss.on("connection", (socket) => {
                 player.isDeath = false;
                 console.log("Player respawned:", uuid);
             }
-            await room.update(uuid, player);
+            await room.sync(uuid, player);
             return;
         }
 
         if (data.event === "chat") {
             const msg = typeof data.message === "string" ? data.message.trim() : "";
-            if (msg.length === 0) return;
+            if (!msg) return;
 
             console.log(`Chat [${player.name} | ${uuid}]: ${msg}`);
 
             const payload = JSON.stringify({
                 event: "message",
-                from: {
-                    uuid,
-                    name: player.name
-                },
+                from: { uuid, name: player.name },
                 message: msg
             });
 
@@ -91,7 +91,6 @@ wss.on("connection", (socket) => {
                     client.send(payload);
                 }
             });
-
             return;
         }
     });
