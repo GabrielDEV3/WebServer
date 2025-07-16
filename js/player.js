@@ -12,9 +12,11 @@ class Player {
         this.rotations = [new Vector2(0, 0), new Vector2(0, 0)];
 
         this.inventory = {};
-        this.weapon = 0;
+        this.weapon = -1;
         this.weapons = [];
-        this.animations = [];
+
+        this.state = "alive";
+        this.animation = "idle";
     }
 
     setJSON(json) {
@@ -29,9 +31,10 @@ class Player {
             this.rotations[1].setJSON(json.rotations[1]);
         }
         if ("inventory" in json) this.inventory = { ...json.inventory };
-        if ("animations" in json) this.animations = json.animations;
         if ("weapon" in json) this.weapon = json.weapon;
         if ("weapons" in json) this.weapons = [...json.weapons];
+        if ("state" in json && typeof json.state === "string") this.state = json.state;
+        if ("animation" in json && typeof json.animation === "string") this.animation = json.animation;
     }
 
     toJSON() {
@@ -45,7 +48,8 @@ class Player {
             inventory: this.inventory,
             weapon: this.weapon,
             weapons: this.weapons,
-            animations: this.animations
+            state: this.state,
+            animation: this.animation
         };
     }
 
