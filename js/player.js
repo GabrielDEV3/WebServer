@@ -11,7 +11,6 @@ class Player {
         this.position = new Vector3(0, 0, 0);
         this.rotations = [new Vector2(0, 0), new Vector2(0, 0)];
 
-        this.inventory = {};
         this.weapon = -1;
         this.weapons = [];
 
@@ -30,7 +29,7 @@ class Player {
             this.rotations[0].setJSON(json.rotations[0]);
             this.rotations[1].setJSON(json.rotations[1]);
         }
-        if ("inventory" in json) this.inventory = { ...json.inventory };
+        
         if ("weapon" in json) this.weapon = json.weapon;
         if ("weapons" in json) this.weapons = [...json.weapons];
         if ("state" in json && typeof json.state === "string") this.state = json.state;
