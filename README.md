@@ -22,7 +22,6 @@ class Player {
     position: Vector3
     rotation: Quaternion
 }
-
 setPosition(x, y, z)
 
 setRotation(x, y, z, w)
@@ -31,14 +30,14 @@ setJSON(json) — atualiza posição, rotação ou nome dinamicamente.
 
 toJSON() / fromJSON(json) — serialização/deserialização.
 
-
+```
 
 ---
 
 📦 Vector3
 
 Representa uma posição 3D no espaço.
-
+```js
 class Vector3 {
     x: number
     y: number
@@ -51,7 +50,7 @@ toJSON() / fromJSON(json)
 
 setJSON(json)
 
-
+```
 
 ---
 
@@ -72,37 +71,36 @@ toJSON() / fromJSON(json)
 
 setJSON(json)
 
-
-
+```
 ---
 
 📦 room.js
 
 Gerencia a lista de jogadores conectados.
-
+```js
 room.add(uuid, name)
 room.get(uuid)
 room.getAll()
 room.update(uuid, json)
 room.remove(uuid)
 
-
+```
 ---
 
 🔄 Eventos WebSocket
 
 joined_server
-
+```json
 {
   "event": "joined_server",
   "content": { "msg": "Bem-vindo ao servidor!", "uuid": "..." }
 }
-
+```
 
 ---
 
 local_player
-
+```json
 {
   "event": "local_player",
   "content": {
@@ -111,11 +109,11 @@ local_player
   }
 }
 
-
+```
 ---
 
 new_player
-
+```json
 {
   "event": "new_player",
   "content": {
@@ -123,12 +121,12 @@ new_player
     "player": { ... }
   }
 }
-
+```
 
 ---
 
 external_players
-
+```json
 {
   "event": "external_players",
   "content": {
@@ -137,11 +135,11 @@ external_players
   }
 }
 
-
+```
 ---
 
 update (Cliente → Servidor)
-
+```json
 {
   "event": "update",
   "content": {
@@ -150,11 +148,11 @@ update (Cliente → Servidor)
   }
 }
 
-
+```
 ---
 
 update_player (Servidor → Outros clientes)
-
+```json
 {
   "event": "update_player",
   "content": {
@@ -163,12 +161,12 @@ update_player (Servidor → Outros clientes)
     "rotation": { ... }
   }
 }
-
+```
 
 ---
 
 chat (Cliente → Servidor)
-
+```json
 {
   "event": "chat",
   "content": {
@@ -176,11 +174,11 @@ chat (Cliente → Servidor)
   }
 }
 
-
+```
 ---
 
 new_chat_message (Servidor → Todos)
-
+```json
 {
   "event": "new_chat_message",
   "content": {
@@ -190,11 +188,11 @@ new_chat_message (Servidor → Todos)
   }
 }
 
-
+```
 ---
 
 player_disconnected
-
+```json
 {
   "event": "player_disconnected",
   "content": {
@@ -203,7 +201,7 @@ player_disconnected
     "msg": "Player-ab123 saiu do jogo!"
   }
 }
-
+```
 
 ---
 
