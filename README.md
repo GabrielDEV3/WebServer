@@ -89,6 +89,16 @@ room.remove(uuid)
 
 ### 🔄 Eventos WebSocket
 
+join
+
+```json
+{
+  "event": "join",
+  "content": { "name": "..." }
+}
+```
+---
+
 joined_server
 ```json
 {
