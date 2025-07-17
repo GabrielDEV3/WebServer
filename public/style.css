@@ -1,0 +1,48 @@
+body {
+  font-family: sans-serif;
+  background: #121212;
+  color: white;
+  padding: 2rem;
+  margin: 0;
+}
+
+h1 {
+  margin-bottom: 1rem;
+}
+
+#status {
+  margin-bottom: 1rem;
+  font-weight: bold;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+th, td {
+  padding: 0.5rem;
+  border-bottom: 1px solid #333;
+  text-align: left;
+}
+
+th {
+  background-color: #1f1f1f;
+}
+
+.alive {
+  color: lightgreen;
+}
+
+.death {
+  color: crimson;
+}
+
+.team-red {
+  color: red;
+}
+
+.team-blue {
+  color: deepskyblue;
+}
