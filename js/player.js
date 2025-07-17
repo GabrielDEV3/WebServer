@@ -1,5 +1,5 @@
-const { Vector3 } = require("./vector3");
-const { Vector2 } = require("./vector2");
+const Vector3 = require("./vector3");
+const Vector2 = require("./vector2");
 
 class Player {
     constructor(uuid, name) {
