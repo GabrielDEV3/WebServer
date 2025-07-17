@@ -1,53 +1,89 @@
-const socket = new WebSocket("wss://" + location.host);
+const statusEl = document.getElementById("status");
+const table = document.getElementById("playerTable");
+const tbody = table.querySelector("tbody");
 
-socket.onopen = () => {
-  document.getElementById("status").textContent = "Conectado ao servidor!";
-};
+const host = window.location.host;
 
-socket.onmessage = (event) => {
-  const data = JSON.parse(event.data);
+let socket;
 
-  if (data.event === "player_sync") {
-    const table = document.getElementById("playerTable");
-    const tbody = table.querySelector("tbody");
-    tbody.innerHTML = "";
+function conectar() {
+  socket = new WebSocket("wss://" + host);
 
-    for (const p of data.content) {
-      const row = document.createElement("tr");
-
-      const name = document.createElement("td");
-      name.textContent = p.name || "(sem nome)";
-      row.appendChild(name);
-
-      const team = document.createElement("td");
-      team.textContent = p.team || "-";
-      team.className = p.team === "red" ? "team-red"
-                        : p.team === "blue" ? "team-blue"
-                        : "";
-      row.appendChild(team);
-
-      const state = document.createElement("td");
-      state.textContent = p.state;
-      state.className = p.state === "alive" ? "alive" : "death";
-      row.appendChild(state);
-
-      const life = document.createElement("td");
-      life.textContent = p.life;
-      row.appendChild(life);
-
-      tbody.appendChild(row);
-    }
-
+  socket.onopen = () => {
+    statusEl.textContent = `Conectado ao servidor: ${host}`;
     table.hidden = false;
-    document.getElementById("status").textContent = 
-      `Jogadores conectados: ${data.content.length}`;
-  }
-};
+  };
 
-socket.onerror = () => {
-  document.getElementById("status").textContent = "Erro de conexão.";
-};
+  socket.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
 
-socket.onclose = () => {
-  document.getElementById("status").textContent = "Desconectado do servidor.";
-};
+      if (data.event === "player_sync") {
+        const players = data.content || [];
+
+        tbody.innerHTML = "";
+
+        if (players.length === 0) {
+          const tr = document.createElement("tr");
+          const td = document.createElement("td");
+          td.colSpan = 5;
+          td.textContent = "Nenhum jogador conectado";
+          td.style.textAlign = "center";
+          tr.appendChild(td);
+          tbody.appendChild(tr);
+        } else {
+          players.forEach(player => {
+            const tr = document.createElement("tr");
+
+            const nome = document.createElement("td");
+            nome.textContent = player.name || "Sem nome";
+            tr.appendChild(nome);
+
+            const time = document.createElement("td");
+            time.textContent = player.team || "Indefinido";
+            time.className = player.team === "red" ? "team-red" : player.team === "blue" ? "team-blue" : "";
+            tr.appendChild(time);
+
+            const estado = document.createElement("td");
+            estado.textContent = player.state || "Desconhecido";
+            estado.className = player.state === "alive" ? "alive" : "death";
+            tr.appendChild(estado);
+
+            const vida = document.createElement("td");
+            vida.textContent = player.life ?? "N/A";
+            tr.appendChild(vida);
+
+            const lifeBar = document.createElement("td");
+            const outer = document.createElement("div");
+            outer.className = "life-bar";
+            const inner = document.createElement("div");
+            inner.className = "life-bar-inner";
+            inner.style.width = `${Math.max(0, Math.min(100, player.life))}%`;
+            if (player.life <= 30) inner.style.backgroundColor = "red";
+            else if (player.life <= 60) inner.style.backgroundColor = "orange";
+            else inner.style.backgroundColor = "limegreen";
+            outer.appendChild(inner);
+            lifeBar.appendChild(outer);
+            tr.appendChild(lifeBar);
+
+            tbody.appendChild(tr);
+          });
+        }
+      }
+    } catch (err) {
+      console.error("Erro ao processar mensagem:", err);
+    }
+  };
+
+  socket.onclose = () => {
+    statusEl.textContent = `Desconectado do servidor: ${host}. Tentando reconectar...`;
+    table.hidden = true;
+    setTimeout(conectar, 3000);
+  };
+
+  socket.onerror = () => {
+    statusEl.textContent = `Erro na conexão com o servidor: ${host}.`;
+  };
+}
+
+conectar();
