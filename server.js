@@ -4,6 +4,7 @@ const { v4 } = require("uuid");
 const room = require("./js/room.js");
 
 const app = express();
+app.use(express.static("public"));
 const PORT = process.env.PORT || 8080;
 const server = app.listen(PORT, () => {
     console.log("Servidor escutando na porta:", PORT);
